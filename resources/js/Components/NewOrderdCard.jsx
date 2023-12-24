@@ -7,7 +7,6 @@ const NewOrderdCard = (props) => {
     return (
         <div>
             <p>今回の注文</p>
-            {console.log(props.card)}
             <p>{cardSymbol}</p>
         </div>
     );
