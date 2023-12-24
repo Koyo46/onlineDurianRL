@@ -103,19 +103,19 @@ export default function Game() {
                         className="ms-4"
                         disabled={processing}
                     >
-                        カードを配る
+                        {isStockChecked ? "新しいゲーム" : "カードを配る"}
                     </PrimaryButton>
                     <SecondaryButton
                         onClick={handleOrderdCard}
                         className="ms-4"
-                        disabled={processing}
+                        disabled={processing || isStockChecked}
                     >
                         注文をとる
                     </SecondaryButton>
                     <SecondaryButton
                         onClick={checkStock}
                         className="ms-4"
-                        disabled={processing}
+                        disabled={processing || isStockChecked}
                     >
                         店長を呼ぶ
                     </SecondaryButton>
@@ -143,15 +143,6 @@ export default function Game() {
                 ) : (
                     <div>ナイス！補充するね</div>
                 ))}
-            {isStockChecked && (
-                <PrimaryButton
-                    onClick={handleHandCard}
-                    className="ms-4"
-                    disabled={processing}
-                >
-                    新しいゲーム
-                </PrimaryButton>
-            )}
         </>
     );
 }
