@@ -12,7 +12,7 @@ const HandCard = (props) => {
                 ).symbol;
                 return (
                     <p key={index}>
-                        {props.player === playerNumber
+                        {props.player === playerNumber && props.check === false
                             ? "？？？あなた"
                             : `${cardSymbol}プレイヤー${playerNumber}`}
                     </p>
