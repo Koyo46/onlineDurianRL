@@ -4,7 +4,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head } from "@inertiajs/react";
 import { CARDS } from "../card.js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Grid, TextField } from "@mui/material";
 
 export default function Game() {
@@ -25,6 +25,16 @@ export default function Game() {
         }
         return array;
     }
+
+    useEffect(() => {
+        if (stockedItems.b < 0 || stockedItems.g < 0 || stockedItems.y < 0) {
+            console.log("stockedItems is empty");
+            setIsStockEmpty(false);
+        } else {
+            console.log("stockedItems is not empty");
+            setIsStockEmpty(true);
+        }
+    }, [stockedItems]);
 
     // 子コンポーネントに渡す関数
     const handleHandCard = () => {
@@ -83,13 +93,6 @@ export default function Game() {
             y: stockedItems.y - totalY,
         });
         setIsStockChecked(true);
-        if (stockedItems.b < 0 || stockedItems.g < 0 || stockedItems.y < 0) {
-            console.log("stockedItems is empty");
-            setIsStockEmpty(false);
-        } else {
-            console.log("stockedItems is not empty");
-            setIsStockEmpty(true);
-        }
     };
 
     return (
@@ -97,7 +100,11 @@ export default function Game() {
             <Head title="Welcome" />
             <Grid container columnGap={10}>
                 <Grid item sx={4}>
-                    <HandCard card={handCard} player={player} />
+                    <HandCard
+                        card={handCard}
+                        player={player}
+                        check={isStockChecked}
+                    />
                     <PrimaryButton
                         onClick={handleHandCard}
                         className="ms-4"
