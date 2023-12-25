@@ -98,8 +98,8 @@ export default function Game() {
     return (
         <>
             <Head title="Welcome" />
-            <Grid container columnGap={10}>
-                <Grid item sx={4}>
+            <Grid container>
+                <Grid item xs={6}>
                     <HandCard
                         card={handCard}
                         player={player}
@@ -128,7 +128,7 @@ export default function Game() {
                     </SecondaryButton>
                     <NewOrderdCard card={orderdCard} />
                 </Grid>
-                <Grid item sx={8}>
+                <Grid item xs={6}>
                     {orderdCards.length > 0 && (
                         <div>
                             <p>注文されたカード:</p>
