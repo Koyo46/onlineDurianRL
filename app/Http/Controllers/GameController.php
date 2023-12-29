@@ -8,15 +8,12 @@ class GameController extends Controller
 {
     public function start()
     {
-        // カードのシャッフル
-        $shuffledCards = Card::all()->shuffle();
-
+        $shuffledCards = Card::all()->shuffle()->toArray();
         // 手札のカードの選択と配布
         $players = 4;
-        $handCards = collect();
 
         for ($i = 0; $i < $players; $i++) {
-            $handCards->push($shuffledCards->splice(0, 1));
+            $handCards[] = array_shift($shuffledCards);
         }
 
         // 在庫アイテムの初期化
@@ -24,10 +21,10 @@ class GameController extends Controller
 
         // 手札のカードの記号の合計を計算
         foreach ($handCards as $card) {
-            $stockedItems['berry'] += $card->berry;
-            $stockedItems['banana'] += $card->banana;
-            $stockedItems['grape'] += $card->grape;
-            $stockedItems['durian'] += $card->durian;
+            $stockedItems['berry'] += $card['berry'];
+            $stockedItems['banana'] += $card['banana'];
+            $stockedItems['grape'] += $card['grape'];
+            $stockedItems['durian'] += $card['durian'];
         }
 
         // 必要なデータを返す
