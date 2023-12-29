@@ -1,3 +1,4 @@
+import axios from "axios";
 import HandCard from "@/Components/HandCard";
 import NewOrderdCard from "@/Components/NewOrderdCard.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
@@ -35,6 +36,16 @@ export default function Game() {
             setIsStockEmpty(true);
         }
     }, [stockedItems]);
+
+    const startGame = async () => {
+        try {
+            const response = await axios.post("/api/game/start");
+            console.log(response.data);
+            setHandCard(response.data);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     // 子コンポーネントに渡す関数
     const handleHandCard = () => {
@@ -106,7 +117,7 @@ export default function Game() {
                         check={isStockChecked}
                     />
                     <PrimaryButton
-                        onClick={handleHandCard}
+                        onClick={startGame}
                         className="ms-4"
                         disabled={processing}
                     >
