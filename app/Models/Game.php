@@ -13,4 +13,11 @@ class Game extends Model
     {
         return $this->hasMany(Player::class);
     }
+
+    // ターンを進めるメソッドを追加
+    public function advanceTurn()
+    {
+        $this->turn++;
+        $this->save();
+    }
 }

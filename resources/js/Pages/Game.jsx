@@ -40,8 +40,9 @@ export default function Game() {
     const startGame = async () => {
         try {
             const response = await axios.post("/api/game/start");
-            console.log(response.data);
-            setHandCard(response.data);
+            console.log(response.data.handCards);
+            setHandCard(response.data.handCards);
+            setIsStockChecked(false);
         } catch (error) {
             console.error(error);
         }
