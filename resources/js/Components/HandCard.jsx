@@ -1,17 +1,13 @@
 import React from "react";
-import { CARDS } from "../card.js";
+import { getCardSymbol } from "../utils/cardHelpers";
 
 const HandCard = (props) => {
     const generatedCard = Array.isArray(props.card) ? props.card : [];
-    console.log(generatedCard);
     return (
         <div>
             {generatedCard.map((cardObj, index) => {
                 const playerNumber = index + 1; // プレイヤー番号を取得
-                const card = CARDS.find((card) => card.id === cardObj.id);
-                const cardSymbol = card
-                    ? card.symbol
-                    : "カードが見つかりません";
+                const cardSymbol = getCardSymbol(cardObj);
                 return (
                     <p key={index}>
                         {props.player === playerNumber && props.check === false
