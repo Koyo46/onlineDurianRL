@@ -57,9 +57,27 @@ class GameController extends Controller
         ]);
     }
 
-    public function orderCard($game)
-    {
-        $game->advanceTurn();
+    public static function orderCard(
+        $game,
+        $deck,
+        $orderdCard,
+        $orderdCards
+    ) {
+        // $game->advanceTurn();
+        if (count($deck) > 0) {
+            if ($orderdCard) {
+                array_push($orderdCards, $orderdCard);
+            }
+            $newOrderdCard = $deck[0]['id'];
+            array_shift($deck); // 配られたカード配列から削除
+            return response()->json([
+                'newOrderdCard' => $newOrderdCard,
+                'orderdCards' => $orderdCards,
+                'deck' => $deck,
+            ]);
+        } else {
+            error_log("shuffledCards is empty");
+        }
     }
 
     public function callMaster()
