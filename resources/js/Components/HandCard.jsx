@@ -9,7 +9,7 @@ const HandCard = (props) => {
             {generatedCard.map((cardObj, index) => {
                 const playerNumber = index + 1; // プレイヤー番号を取得
                 return (
-                    <p key={index}>
+                    <div key={index}>
                         {props.player === playerNumber &&
                         props.check === false ? (
                             <Grid container>
@@ -26,7 +26,7 @@ const HandCard = (props) => {
                                 <Grid item>{`プレイヤー${playerNumber}`}</Grid>
                             </Grid>
                         )}
-                    </p>
+                    </div>
                 );
             })}
         </div>

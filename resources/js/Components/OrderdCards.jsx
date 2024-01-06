@@ -6,9 +6,9 @@ const NewOrderdCard = (props) => {
 
     return (
         <div>
-            <p>注文されたカード:</p>
+            <p>　　❌　　⭕️</p>
             {props.cards.map((card, index) => {
-                return <img src={getCardSymbol(card)} />;
+                return <img key={index} src={getCardSymbol(card)} />;
             })}
         </div>
     );
