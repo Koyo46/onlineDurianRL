@@ -68,7 +68,7 @@ class GameController extends Controller
             if ($orderdCard) {
                 array_push($orderdCards, $orderdCard);
             }
-            $newOrderdCard = $deck[0]['id'];
+            $newOrderdCard = $deck[0];
             array_shift($deck); // 配られたカード配列から削除
             return response()->json([
                 'newOrderdCard' => $newOrderdCard,
@@ -80,7 +80,23 @@ class GameController extends Controller
         }
     }
 
-    public function callMaster()
+    public static function callMaster($orderdCards, $stockedItems)
     {
+        $totalBerry = 0;
+        $totalBanana = 0;
+        $totalGrape = 0;
+        $totalDurian = 0;
+
+        foreach ($orderdCards as $card) {
+            $totalBerry += $card['berry'];
+            $totalBanana += $card['banana'];
+            $totalGrape += $card['grape'];
+            $totalDurian += $card['durian'];
+        }
+        if ($totalBerry > $stockedItems['berry'] || $totalBanana > $stockedItems['banana'] || $totalGrape > $stockedItems['grape'] || $totalDurian > $stockedItems['durian']) {
+            return true;
+        } else {
+            return false;
+        }
     }
 }
