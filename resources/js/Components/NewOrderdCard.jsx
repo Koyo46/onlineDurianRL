@@ -3,7 +3,6 @@ import { getCardSymbol } from "../utils/cardHelpers";
 
 const NewOrderdCard = (props) => {
     if (!props.card) return null; // props.cardが存在しない場合、何もレンダリングしない
-    const cardSymbol = <img src={getCardSymbol(props.card)} />;
 
     return (
         <div>

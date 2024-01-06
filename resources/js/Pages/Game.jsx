@@ -1,6 +1,7 @@
 import axios from "axios";
 import HandCard from "@/Components/HandCard";
 import NewOrderdCard from "@/Components/NewOrderdCard.jsx";
+import OrderdCards from "@/Components/OrderdCards.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head } from "@inertiajs/react";
@@ -107,14 +108,7 @@ export default function Game() {
                         ))}
                 </Grid>
                 <Grid item xs={6}>
-                    {orderdCards.length > 0 && (
-                        <div>
-                            <p>注文されたカード:</p>
-                            {orderdCards.map((card, index) => {
-                                return <img src={getCardSymbol(card)} />;
-                            })}
-                        </div>
-                    )}
+                    <OrderdCards cards={orderdCards} />
                 </Grid>
             </Grid>
         </>
