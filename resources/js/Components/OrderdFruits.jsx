@@ -1,7 +1,7 @@
 import React from "react";
 import { getCardSymbol } from "../utils/cardHelpers";
 
-const NewOrderdCard = (props) => {
+const OrderdFruits = (props) => {
     if (!props.cards) return null; // props.cardが存在しない場合、何もレンダリングしない
 
     return (
@@ -14,4 +14,4 @@ const NewOrderdCard = (props) => {
     );
 };
 
-export default NewOrderdCard;
+export default OrderdFruits;

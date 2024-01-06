@@ -1,7 +1,7 @@
 import axios from "axios";
 import HandCard from "@/Components/HandCard";
 import NewOrderdCard from "@/Components/NewOrderdCard.jsx";
-import OrderdCards from "@/Components/OrderdCards.jsx";
+import OrderdFruits from "@/Components/OrderdFruits.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head } from "@inertiajs/react";
@@ -16,7 +16,7 @@ export default function Game() {
     const [game, setGame] = useState("");
     const [handCard, setHandCard] = useState("");
     const [orderdCard, setOrderdCard] = useState("");
-    const [orderdCards, setOrderdCards] = useState([]);
+    const [orderdFruits, setOrderdFruits] = useState([]);
     const [stockedItems, setStockedItems] = useState([]);
     const [isStockEmpty, setIsStockEmpty] = useState(true);
     const [isStockChecked, setIsStockChecked] = useState(false);
@@ -30,7 +30,7 @@ export default function Game() {
             setDeck(response.data.deck);
             setStockedItems(response.data.stockedItems);
             setOrderdCard(response.data.orderdCard);
-            setOrderdCards([]);
+            setOrderdFruits([]);
             setIsStockChecked(false);
         } catch (error) {
             console.error(error);
@@ -43,10 +43,10 @@ export default function Game() {
                 game: game,
                 deck: deck,
                 orderdCard: orderdCard,
-                orderdCards: orderdCards,
+                orderdFruits: orderdFruits,
             });
             setOrderdCard(response.data.newOrderdCard);
-            setOrderdCards(response.data.orderdCards);
+            setOrderdFruits(response.data.orderdFruits);
             setDeck(response.data.deck);
         } catch (error) {
             console.error(error);
@@ -56,7 +56,7 @@ export default function Game() {
     const callMaster = async () => {
         try {
             const response = await axios.post("/api/game/callMaster", {
-                orderdCards: orderdCards,
+                orderdFruits: orderdFruits,
                 stockedItems: stockedItems,
             });
             setIsStockEmpty(response.data);
@@ -97,7 +97,10 @@ export default function Game() {
                     >
                         店長を呼ぶ
                     </SecondaryButton>
-                    <NewOrderdCard card={orderdCard} />
+                    <NewOrderdCard
+                        card={orderdCard}
+                        orderdFruits={orderdFruits}
+                    />
                     {isStockChecked &&
                         (isStockEmpty ? (
                             <div>
@@ -108,7 +111,7 @@ export default function Game() {
                         ))}
                 </Grid>
                 <Grid item xs={6}>
-                    <OrderdCards cards={orderdCards} />
+                    <OrderdFruits cards={orderdFruits} />
                 </Grid>
             </Grid>
         </>

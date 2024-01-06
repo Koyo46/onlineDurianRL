@@ -1,30 +1,32 @@
-import React from "react";
+import React, { useState } from "react";
 import { getCardSymbol } from "../utils/cardHelpers";
 
 const NewOrderdCard = (props) => {
+    const [selectedFruit, setSelectedFruit] = useState("");
     if (!props.card) return null; // props.cardが存在しない場合、何もレンダリングしない
-    let firstFruit = "";
-    let secondFruit = "";
-    if (props.card.berry) {
-        firstFruit = "🍓";
-    }
-    if (props.card.banana) {
-        if (firstFruit) {
-            secondFruit = "🍌";
-        } else {
-            firstFruit = "🍌";
+    const fruits = {
+        berry: "🍓",
+        banana: "🍌",
+        grape: "🍇",
+        durian: "🦔",
+    };
+
+    let [firstFruit, secondFruit] = Object.entries(fruits)
+        .filter(([key]) => props.card[key])
+        .map(([key, icon]) => ({ name: key, icon: icon }));
+
+    const decideOrder = async () => {
+        try {
+            const response = await axios.post("/api/game/decideOrder", {
+                orderdFruits: props.orderdFruits,
+                card: props.card,
+                fruit: selectedFruit,
+            });
+            // Handle response here
+        } catch (error) {
+            console.error(error);
         }
-    }
-    if (props.card.grape) {
-        if (firstFruit) {
-            secondFruit = "🍇";
-        } else {
-            firstFruit = "🍇";
-        }
-    }
-    if (props.card.durian) {
-        secondFruit = "🦔";
-    }
+    };
 
     return (
         <div>
@@ -32,6 +34,10 @@ const NewOrderdCard = (props) => {
             <img src={getCardSymbol(props.card)} />
             <p>どちらの注文をとるか選んでね</p>
             <button
+                onClick={() => {
+                    decideOrder();
+                    setSelectedFruit(firstFruit.name);
+                }}
                 style={{
                     margin: "25px",
                     padding: "10px",
@@ -43,9 +49,13 @@ const NewOrderdCard = (props) => {
                     cursor: "pointer",
                 }}
             >
-                {firstFruit}
+                {firstFruit.icon}
             </button>
             <button
+                onClick={() => {
+                    decideOrder();
+                    setSelectedFruit(secondFruit.name);
+                }}
                 style={{
                     margin: "10px",
                     padding: "10px",
@@ -57,7 +67,7 @@ const NewOrderdCard = (props) => {
                     cursor: "pointer",
                 }}
             >
-                {secondFruit}
+                {secondFruit.icon}
             </button>
         </div>
     );

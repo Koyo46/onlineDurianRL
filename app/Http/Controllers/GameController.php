@@ -58,21 +58,18 @@ class GameController extends Controller
     }
 
     public static function orderCard(
-        $game,
         $deck,
         $orderdCard,
-        $orderdCards
+        $orderdFruits
     ) {
         // $game->advanceTurn();
         if (count($deck) > 0) {
-            if ($orderdCard) {
-                array_push($orderdCards, $orderdCard);
-            }
+
             $newOrderdCard = $deck[0];
-            array_shift($deck); // 配られたカード配列から削除
+            array_shift($deck); // 配られたカードを配列から削除
             return response()->json([
                 'newOrderdCard' => $newOrderdCard,
-                'orderdCards' => $orderdCards,
+                'orderdFruits' => $orderdFruits,
                 'deck' => $deck,
             ]);
         } else {
@@ -80,14 +77,22 @@ class GameController extends Controller
         }
     }
 
-    public static function callMaster($orderdCards, $stockedItems)
+    public static function decideOrder(
+        $orderdFruits,
+        $card,
+        $fruit
+    ) {
+        array_push($orderdFruits, $card);
+    }
+
+    public static function callMaster($orderdFruits, $stockedItems)
     {
         $totalBerry = 0;
         $totalBanana = 0;
         $totalGrape = 0;
         $totalDurian = 0;
 
-        foreach ($orderdCards as $card) {
+        foreach ($orderdFruits as $card) {
             $totalBerry += $card['berry'];
             $totalBanana += $card['banana'];
             $totalGrape += $card['grape'];
