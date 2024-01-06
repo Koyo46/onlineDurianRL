@@ -111,8 +111,7 @@ export default function Game() {
                         <div>
                             <p>注文されたカード:</p>
                             {orderdCards.map((card, index) => {
-                                let cardSymbol = getCardSymbol(card);
-                                return <p key={index}>{`${cardSymbol}`}</p>;
+                                return <img src={getCardSymbol(card)} />;
                             })}
                         </div>
                     )}
