@@ -97,6 +97,14 @@ export default function Game() {
                         店長を呼ぶ
                     </SecondaryButton>
                     <NewOrderdCard card={orderdCard} />
+                    {isStockChecked &&
+                        (isStockEmpty ? (
+                            <div>
+                                <p>ナイス！補充するね</p>
+                            </div>
+                        ) : (
+                            <div>まだ在庫あるじゃん！！</div>
+                        ))}
                 </Grid>
                 <Grid item xs={6}>
                     {orderdCards.length > 0 && (
@@ -110,14 +118,6 @@ export default function Game() {
                     )}
                 </Grid>
             </Grid>
-            {isStockChecked &&
-                (isStockEmpty ? (
-                    <div>
-                        <p>ナイス！補充するね</p>
-                    </div>
-                ) : (
-                    <div>まだ在庫あるじゃん！！</div>
-                ))}
         </>
     );
 }
