@@ -34,6 +34,7 @@ export default function Game() {
             setOrderdCard(response.data.orderdCard);
             setOrderdFruits([]);
             setIsStockChecked(false);
+            console.log(handCard);
         } catch (error) {
             console.error(error);
         }
@@ -48,11 +49,9 @@ export default function Game() {
                 orderdFruits: orderdFruits,
             });
             setOrderdCard(response.data.newOrderdCard);
-            setOrderdFruits(response.data.orderdFruits);
             setDeck(response.data.deck);
             setDecided(false);
-            const selectedFruitObject = JSON.parse(orderdCard.selected_fruit);
-            console.log(selectedFruitObject);
+            console.log(orderdFruits);
         } catch (error) {
             console.error(error);
         }
@@ -121,6 +120,7 @@ export default function Game() {
                         ))}
                 </Grid>
                 <Grid item xs={6}>
+                    <p>　　❌　　⭕️</p>
                     <OrderdFruits
                         card={orderdCard}
                         orderdFruits={orderdFruits}

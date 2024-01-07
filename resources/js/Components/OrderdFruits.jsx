@@ -6,7 +6,6 @@ const OrderdFruits = (props) => {
 
     return (
         <div>
-            <p>　　❌　　⭕️</p>
             {props.orderdFruits.map((card, index) => {
                 return <img key={index} src={getCardSymbol(card)} />;
             })}
