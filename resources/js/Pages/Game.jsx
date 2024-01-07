@@ -1,11 +1,10 @@
 import axios from "axios";
 import HandCard from "@/Components/HandCard";
 import NewOrderdCard from "@/Components/NewOrderdCard.jsx";
-import OrderdCards from "@/Components/OrderdCards.jsx";
+import OrderdFruits from "@/Components/OrderdFruits.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head } from "@inertiajs/react";
-import { CARDS } from "../card.js";
 import { useEffect, useState } from "react";
 import { Grid, TextField } from "@mui/material";
 import { getCardSymbol } from "../utils/cardHelpers.js";
@@ -16,11 +15,13 @@ export default function Game() {
     const [game, setGame] = useState("");
     const [handCard, setHandCard] = useState("");
     const [orderdCard, setOrderdCard] = useState("");
-    const [orderdCards, setOrderdCards] = useState([]);
+    const [orderdFruits, setOrderdFruits] = useState([]);
+    const [decided, setDecided] = useState(true);
     const [stockedItems, setStockedItems] = useState([]);
     const [isStockEmpty, setIsStockEmpty] = useState(true);
     const [isStockChecked, setIsStockChecked] = useState(false);
     const [deck, setDeck] = useState([]);
+    const [selectedFruit, setSelectedFruit] = useState(""); // Added state for selectedFruit
 
     const startGame = async () => {
         try {
@@ -30,12 +31,16 @@ export default function Game() {
             setDeck(response.data.deck);
             setStockedItems(response.data.stockedItems);
             setOrderdCard(response.data.orderdCard);
-            setOrderdCards([]);
+            setOrderdFruits([]);
             setIsStockChecked(false);
         } catch (error) {
             console.error(error);
         }
     };
+
+    useEffect(() => {
+        console.log(handCard, orderdCard);
+    }, [handCard, orderdCard]);
 
     const handleOrderCard = async () => {
         try {
@@ -43,11 +48,12 @@ export default function Game() {
                 game: game,
                 deck: deck,
                 orderdCard: orderdCard,
-                orderdCards: orderdCards,
+                orderdFruits: orderdFruits,
             });
             setOrderdCard(response.data.newOrderdCard);
-            setOrderdCards(response.data.orderdCards);
             setDeck(response.data.deck);
+            setDecided(false);
+            console.log(orderdFruits);
         } catch (error) {
             console.error(error);
         }
@@ -56,7 +62,7 @@ export default function Game() {
     const callMaster = async () => {
         try {
             const response = await axios.post("/api/game/callMaster", {
-                orderdCards: orderdCards,
+                orderdFruits: orderdFruits,
                 stockedItems: stockedItems,
             });
             setIsStockEmpty(response.data);
@@ -97,7 +103,15 @@ export default function Game() {
                     >
                         店長を呼ぶ
                     </SecondaryButton>
-                    <NewOrderdCard card={orderdCard} />
+                    <NewOrderdCard
+                        card={orderdCard}
+                        selectedFruit={selectedFruit}
+                        setSelectedFruit={setSelectedFruit}
+                        orderdFruits={orderdFruits}
+                        setOrderdFruits={setOrderdFruits}
+                        decided={decided}
+                        setDecided={setDecided}
+                    />
                     {isStockChecked &&
                         (isStockEmpty ? (
                             <div>
@@ -108,7 +122,8 @@ export default function Game() {
                         ))}
                 </Grid>
                 <Grid item xs={6}>
-                    <OrderdCards cards={orderdCards} />
+                    <p>　　❌　　⭕️</p>
+                    <OrderdFruits orderdFruits={orderdFruits} />
                 </Grid>
             </Grid>
         </>

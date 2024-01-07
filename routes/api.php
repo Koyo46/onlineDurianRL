@@ -21,8 +21,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post('/game/start', [GameController::class, 'start']);
 Route::post('/game/orderCard', function (Request $request) {
-    return GameController::orderCard($request->game, $request->deck, $request->orderdCard, $request->orderdCards);
+    return GameController::orderCard($request->deck, $request->orderdCard, $request->orderdFruits);
+});
+Route::post('/game/decideOrder', function (Request $request) {
+    return GameController::decideOrder($request->card, $request->selectedFruitId);
 });
 Route::post('/game/callMaster', function (Request $request) {
-    return GameController::callMaster($request->orderdCards, $request->stockedItems);
+    return GameController::callMaster($request->orderdFruits, $request->stockedItems);
 });
