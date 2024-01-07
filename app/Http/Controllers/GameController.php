@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Card;
 use App\Models\Game;
+use App\Models\OrderdFruits;
 use App\Models\Player;
+use Illuminate\Support\Facades\Log;
 
 class GameController extends Controller
 {
@@ -27,10 +29,13 @@ class GameController extends Controller
     public function start()
     {
         $game = Game::create(); // Gameを作成
+        OrderdFruits::truncate(); // orderd_fruitsテーブルのレコードを全削除
 
         //オブジェクトで扱いたい
-        $shuffledCards = Card::all()->shuffle()->toArray();
-        // 手札のカードの選択と配布
+        $cards = include(database_path('data/cards.php'));
+        shuffle($cards); // 配列をシャッフル
+        $shuffledCards = $cards; // シャッフルされた配列を$shuffledCardsに代入
+
         $players = 4;
 
         for ($i = 0; $i < $players; $i++) {
@@ -42,10 +47,10 @@ class GameController extends Controller
 
         // 手札のカードの記号の合計を計算
         foreach ($handCards as $card) {
-            $stockedItems['berry'] += $card['berry'];
-            $stockedItems['banana'] += $card['banana'];
-            $stockedItems['grape'] += $card['grape'];
-            $stockedItems['durian'] += $card['durian'];
+            $stockedItems['berry'] += ($card['fruit1'] === 'berry' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'berry' ? $card['fruit2_count'] : 0);
+            $stockedItems['banana'] += ($card['fruit1'] === 'banana' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'banana' ? $card['fruit2_count'] : 0);
+            $stockedItems['grape'] += ($card['fruit1'] === 'grape' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'grape' ? $card['fruit2_count'] : 0);
+            $stockedItems['durian'] += ($card['fruit1'] === 'durian' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'durian' ? $card['fruit2_count'] : 0);
         }
 
         // 必要なデータを返す
@@ -75,18 +80,21 @@ class GameController extends Controller
     }
 
     public static function decideOrder(
-        $orderdFruits,
         $card,
-        $selectedFruit
+        $selectedFruitId
     ) {
-        $card["selected_fruit"] = $selectedFruit;
-        $cardModel = Card::find($card['id']);
-        $cardModel->selected_fruit = $selectedFruit;
-        $cardModel->save();
-        if (!is_array($orderdFruits)) {
-            $orderdFruits = [];
-        }
-        array_push($orderdFruits, $card);
+        Log::error($card);
+        OrderdFruits::create([
+            'card_id' => $card['id'],
+            'fruit1' => $card['fruit1'],
+            'fruit1_count' => $card['fruit1_count'],
+            'fruit2' => $card['fruit2'],
+            'fruit2_count' => $card['fruit2_count'],
+            'selected_fruit' => $selectedFruitId
+        ]);
+
+        $orderdFruits = OrderdFruits::all();
+
         return response()->json([
             'orderdFruits' => $orderdFruits,
         ]);

@@ -5,7 +5,6 @@ import OrderdFruits from "@/Components/OrderdFruits.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head } from "@inertiajs/react";
-import { CARDS } from "../card.js";
 import { useEffect, useState } from "react";
 import { Grid, TextField } from "@mui/material";
 import { getCardSymbol } from "../utils/cardHelpers.js";
@@ -34,11 +33,14 @@ export default function Game() {
             setOrderdCard(response.data.orderdCard);
             setOrderdFruits([]);
             setIsStockChecked(false);
-            console.log(handCard);
         } catch (error) {
             console.error(error);
         }
     };
+
+    useEffect(() => {
+        console.log(handCard, orderdCard);
+    }, [handCard, orderdCard]);
 
     const handleOrderCard = async () => {
         try {
@@ -121,10 +123,7 @@ export default function Game() {
                 </Grid>
                 <Grid item xs={6}>
                     <p>　　❌　　⭕️</p>
-                    <OrderdFruits
-                        card={orderdCard}
-                        orderdFruits={orderdFruits}
-                    />
+                    <OrderdFruits orderdFruits={orderdFruits} />
                 </Grid>
             </Grid>
         </>

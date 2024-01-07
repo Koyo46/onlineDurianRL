@@ -24,7 +24,7 @@ Route::post('/game/orderCard', function (Request $request) {
     return GameController::orderCard($request->deck, $request->orderdCard, $request->orderdFruits);
 });
 Route::post('/game/decideOrder', function (Request $request) {
-    return GameController::decideOrder($request->orderdFruits, $request->card, $request->fruit);
+    return GameController::decideOrder($request->card, $request->selectedFruitId);
 });
 Route::post('/game/callMaster', function (Request $request) {
     return GameController::callMaster($request->orderdFruits, $request->stockedItems);

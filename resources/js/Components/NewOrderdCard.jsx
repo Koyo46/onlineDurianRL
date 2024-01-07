@@ -4,8 +4,6 @@ import { fruits } from "../utils/fruits";
 
 const NewOrderdCard = ({
     card,
-    selectedFruit,
-    setSelectedFruit,
     orderdFruits,
     setOrderdFruits,
     decided,
@@ -16,20 +14,16 @@ const NewOrderdCard = ({
         return null;
     }
 
-    let [firstFruit, secondFruit] = Object.entries(fruits)
-        .filter(([key]) => card[key])
-        .map(([key]) => key);
-
-    const decideOrder = async (fruit) => {
+    const decideOrder = async (selectedFruitId) => {
         try {
             const response = await axios.post("/api/game/decideOrder", {
                 card: card,
-                fruit: fruit,
-                orderdFruits: orderdFruits,
+                selectedFruitId: selectedFruitId,
             });
+            // Orderd Fruitsコンポーネントでレンダリングするための処理を追加
             setOrderdFruits(response.data.orderdFruits);
-            setDecided(true);
             console.log(response.data.orderdFruits);
+            setDecided(true);
         } catch (error) {
             console.error(error);
         }
@@ -42,8 +36,7 @@ const NewOrderdCard = ({
             <p>どちらの注文をとるか選んでね</p>
             <button
                 onClick={() => {
-                    setSelectedFruit(firstFruit);
-                    decideOrder(firstFruit);
+                    decideOrder(1);
                 }}
                 style={{
                     margin: "25px",
@@ -56,25 +49,24 @@ const NewOrderdCard = ({
                     cursor: "pointer",
                 }}
             >
-                {fruits[firstFruit]}
+                {fruits[card["fruit1"]]}
             </button>
             <button
                 onClick={() => {
-                    setSelectedFruit(secondFruit);
-                    decideOrder(secondFruit);
+                    decideOrder(2);
                 }}
                 style={{
                     margin: "10px",
                     padding: "10px",
                     fontSize: "16px",
-                    backgroundColor: "#f44336",
+                    backgroundColor: "#2196F3",
                     color: "white",
                     border: "none",
                     borderRadius: "5px",
                     cursor: "pointer",
                 }}
             >
-                {fruits[secondFruit]}
+                {fruits[card["fruit2"]]}
             </button>
         </div>
     );
