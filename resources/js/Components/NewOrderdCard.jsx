@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getCardSymbol } from "../utils/cardHelpers";
+import { fruits } from "../utils/fruits";
 
 const NewOrderdCard = ({
     card,
@@ -12,30 +13,23 @@ const NewOrderdCard = ({
 }) => {
     if (!card || decided) {
         setDecided;
-        return null; // props.cardが存在しない場合、何もレンダリングしない
+        return null;
     }
-
-    const fruits = {
-        berry: "🍓",
-        banana: "🍌",
-        grape: "🍇",
-        durian: "🦔",
-    };
 
     let [firstFruit, secondFruit] = Object.entries(fruits)
         .filter(([key]) => card[key])
-        .map(([key, icon]) => ({ name: key, icon: icon }));
+        .map(([key]) => key);
 
-    const decideOrder = async () => {
+    const decideOrder = async (fruit) => {
         try {
             const response = await axios.post("/api/game/decideOrder", {
                 card: card,
-                fruit: selectedFruit,
+                fruit: fruit,
                 orderdFruits: orderdFruits,
             });
             setOrderdFruits(response.data.orderdFruits);
             setDecided(true);
-            console.log(response.data);
+            console.log(response.data.orderdFruits);
         } catch (error) {
             console.error(error);
         }
@@ -48,8 +42,8 @@ const NewOrderdCard = ({
             <p>どちらの注文をとるか選んでね</p>
             <button
                 onClick={() => {
-                    decideOrder();
                     setSelectedFruit(firstFruit);
+                    decideOrder(firstFruit);
                 }}
                 style={{
                     margin: "25px",
@@ -62,12 +56,12 @@ const NewOrderdCard = ({
                     cursor: "pointer",
                 }}
             >
-                {firstFruit.icon}
+                {fruits[firstFruit]}
             </button>
             <button
                 onClick={() => {
-                    decideOrder();
                     setSelectedFruit(secondFruit);
+                    decideOrder(secondFruit);
                 }}
                 style={{
                     margin: "10px",
@@ -80,7 +74,7 @@ const NewOrderdCard = ({
                     cursor: "pointer",
                 }}
             >
-                {secondFruit.icon}
+                {fruits[secondFruit]}
             </button>
         </div>
     );
