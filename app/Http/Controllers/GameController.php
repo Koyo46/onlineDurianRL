@@ -59,8 +59,6 @@ class GameController extends Controller
 
     public static function orderCard(
         $deck,
-        $orderdCard,
-        $orderdFruits
     ) {
         // $game->advanceTurn();
         if (count($deck) > 0) {
@@ -69,7 +67,6 @@ class GameController extends Controller
             array_shift($deck); // 配られたカードを配列から削除
             return response()->json([
                 'newOrderdCard' => $newOrderdCard,
-                'orderdFruits' => $orderdFruits,
                 'deck' => $deck,
             ]);
         } else {
@@ -80,9 +77,19 @@ class GameController extends Controller
     public static function decideOrder(
         $orderdFruits,
         $card,
-        $fruit
+        $selectedFruit
     ) {
+        $card["selected_fruit"] = $selectedFruit;
+        $cardModel = Card::find($card['id']);
+        $cardModel->selected_fruit = $selectedFruit;
+        $cardModel->save();
+        if (!is_array($orderdFruits)) {
+            $orderdFruits = [];
+        }
         array_push($orderdFruits, $card);
+        return response()->json([
+            'orderdFruits' => $orderdFruits,
+        ]);
     }
 
     public static function callMaster($orderdFruits, $stockedItems)

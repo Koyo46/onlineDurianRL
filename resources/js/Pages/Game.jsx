@@ -17,10 +17,12 @@ export default function Game() {
     const [handCard, setHandCard] = useState("");
     const [orderdCard, setOrderdCard] = useState("");
     const [orderdFruits, setOrderdFruits] = useState([]);
+    const [decided, setDecided] = useState(true);
     const [stockedItems, setStockedItems] = useState([]);
     const [isStockEmpty, setIsStockEmpty] = useState(true);
     const [isStockChecked, setIsStockChecked] = useState(false);
     const [deck, setDeck] = useState([]);
+    const [selectedFruit, setSelectedFruit] = useState(""); // Added state for selectedFruit
 
     const startGame = async () => {
         try {
@@ -48,6 +50,9 @@ export default function Game() {
             setOrderdCard(response.data.newOrderdCard);
             setOrderdFruits(response.data.orderdFruits);
             setDeck(response.data.deck);
+            setDecided(false);
+            const selectedFruitObject = JSON.parse(orderdCard.selected_fruit);
+            console.log(selectedFruitObject);
         } catch (error) {
             console.error(error);
         }
@@ -99,7 +104,12 @@ export default function Game() {
                     </SecondaryButton>
                     <NewOrderdCard
                         card={orderdCard}
+                        selectedFruit={selectedFruit}
+                        setSelectedFruit={setSelectedFruit}
                         orderdFruits={orderdFruits}
+                        setOrderdFruits={setOrderdFruits}
+                        decided={decided}
+                        setDecided={setDecided}
                     />
                     {isStockChecked &&
                         (isStockEmpty ? (
@@ -111,7 +121,10 @@ export default function Game() {
                         ))}
                 </Grid>
                 <Grid item xs={6}>
-                    <OrderdFruits cards={orderdFruits} />
+                    <OrderdFruits
+                        card={orderdCard}
+                        orderdFruits={orderdFruits}
+                    />
                 </Grid>
             </Grid>
         </>

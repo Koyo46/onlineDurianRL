@@ -1,9 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getCardSymbol } from "../utils/cardHelpers";
 
-const NewOrderdCard = (props) => {
-    const [selectedFruit, setSelectedFruit] = useState("");
-    if (!props.card) return null; // props.cardが存在しない場合、何もレンダリングしない
+const NewOrderdCard = ({
+    card,
+    selectedFruit,
+    setSelectedFruit,
+    orderdFruits,
+    setOrderdFruits,
+    decided,
+    setDecided,
+}) => {
+    if (!card || decided) {
+        setDecided;
+        return null; // props.cardが存在しない場合、何もレンダリングしない
+    }
+
     const fruits = {
         berry: "🍓",
         banana: "🍌",
@@ -12,17 +23,19 @@ const NewOrderdCard = (props) => {
     };
 
     let [firstFruit, secondFruit] = Object.entries(fruits)
-        .filter(([key]) => props.card[key])
+        .filter(([key]) => card[key])
         .map(([key, icon]) => ({ name: key, icon: icon }));
 
     const decideOrder = async () => {
         try {
             const response = await axios.post("/api/game/decideOrder", {
-                orderdFruits: props.orderdFruits,
-                card: props.card,
+                card: card,
                 fruit: selectedFruit,
+                orderdFruits: orderdFruits,
             });
-            // Handle response here
+            setOrderdFruits(response.data.orderdFruits);
+            setDecided(true);
+            console.log(response.data);
         } catch (error) {
             console.error(error);
         }
@@ -31,12 +44,12 @@ const NewOrderdCard = (props) => {
     return (
         <div>
             <p>今回の注文</p>
-            <img src={getCardSymbol(props.card)} />
+            <img src={getCardSymbol(card)} />
             <p>どちらの注文をとるか選んでね</p>
             <button
                 onClick={() => {
                     decideOrder();
-                    setSelectedFruit(firstFruit.name);
+                    setSelectedFruit(firstFruit);
                 }}
                 style={{
                     margin: "25px",
@@ -54,7 +67,7 @@ const NewOrderdCard = (props) => {
             <button
                 onClick={() => {
                     decideOrder();
-                    setSelectedFruit(secondFruit.name);
+                    setSelectedFruit(secondFruit);
                 }}
                 style={{
                     margin: "10px",
