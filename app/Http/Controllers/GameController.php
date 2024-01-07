@@ -107,11 +107,38 @@ class GameController extends Controller
         $totalGrape = 0;
         $totalDurian = 0;
 
-        foreach ($orderdFruits as $card) {
-            $totalBerry += $card['berry'];
-            $totalBanana += $card['banana'];
-            $totalGrape += $card['grape'];
-            $totalDurian += $card['durian'];
+        foreach ($orderdFruits as $fruit) {
+            if ($fruit['selected_fruit'] == 1) {
+                switch ($fruit['fruit1']) {
+                    case 'berry':
+                        $totalBerry += $fruit['fruit1_count'];
+                        break;
+                    case 'banana':
+                        $totalBanana += $fruit['fruit1_count'];
+                        break;
+                    case 'grape':
+                        $totalGrape += $fruit['fruit1_count'];
+                        break;
+                    case 'durian':
+                        $totalDurian += $fruit['fruit1_count'];
+                        break;
+                }
+            } else {
+                switch ($fruit['fruit2']) {
+                    case 'berry':
+                        $totalBerry += $fruit['fruit2_count'];
+                        break;
+                    case 'banana':
+                        $totalBanana += $fruit['fruit2_count'];
+                        break;
+                    case 'grape':
+                        $totalGrape += $fruit['fruit2_count'];
+                        break;
+                    case 'durian':
+                        $totalDurian += $fruit['fruit2_count'];
+                        break;
+                }
+            }
         }
         if ($totalBerry > $stockedItems['berry'] || $totalBanana > $stockedItems['banana'] || $totalGrape > $stockedItems['grape'] || $totalDurian > $stockedItems['durian']) {
             return true;
