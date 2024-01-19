@@ -14,6 +14,10 @@ class Game extends Model
         return $this->hasMany(Player::class);
     }
 
+    protected $fillable = [
+        'current_turn', 'current_round',
+    ];
+
     // ターンを進めるメソッドを追加
     public function advanceTurn()
     {

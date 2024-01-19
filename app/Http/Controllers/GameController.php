@@ -2,33 +2,75 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GameStarted;
+use App\Events\PlayersReady;
 use App\Http\Controllers\Controller;
 use App\Models\Card;
 use App\Models\Game;
 use App\Models\OrderdFruits;
 use App\Models\Player;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class GameController extends Controller
 {
-    public function startGame()
+    public function createGame(Request $request)
     {
-        $game = Game::create(); // Gameを作成
+        $game = Game::create(); // 新しいゲームを作成
 
-        // 6人分のプレイヤー情報を作成
-        $playerNames = ['Player1', 'Player2', 'Player3', 'Player4', 'Player5', 'Player6'];
-
-        foreach ($playerNames as $name) {
+        // 指定された数のプレイヤーを作成
+        for ($i = 0; $i < $request->playerCount; $i++) {
             Player::create([
                 'game_id' => $game->id,
-                'name' => $name,
+                'name' => '',
+                'is_ready' => false,
             ]);
         }
+        event(new GameStarted($game));
+
+        return response()->json(['redirectUrl' => route('game', ['gameId' => $game->id, 'playerCount' => $request->playerCount])]);
     }
 
-    public function start()
+    public static function joinGame($gameId)
     {
-        $game = Game::create(); // Gameを作成
+        $game = Game::find($gameId);
+        if (!$game) {
+            return response()->json(['error' => '指定されたゲームが見つかりません。']);
+        }
+        return response()->json(['game' => $game]);
+    }
+
+    public static function getPlayers($gameId)
+    {
+        $players = Player::where('game_id', $gameId)->where('is_ready', true)->get();
+        return response()->json(['players' => $players]);
+    }
+
+    public static function beReady($name, $gameId)
+    {
+        $player = Player::where('game_id', $gameId)->where('name', "")->first();
+        if (!$player) {
+            return response()->json(['full' => true]);
+        }
+        $player->name = $name;
+        $player->is_ready = true;
+        $player->save();
+        $result = event(new PlayersReady($player));
+        Log::alert($result);
+
+        return response()->json(['player' => $player]);
+    }
+
+    public static function startGame($gameId)
+    {
+        $game = Game::find($gameId);
+        $players = $game->players;
+
+        foreach ($players as $player) {
+            if (!$player->is_ready) {
+                return response()->json(['error' => 'All players are not ready yet.']);
+            }
+        }
         OrderdFruits::truncate(); // orderd_fruitsテーブルのレコードを全削除
 
         //オブジェクトで扱いたい

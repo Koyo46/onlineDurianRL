@@ -13,4 +13,9 @@ class Player extends Model
     {
         return $this->belongsTo(Game::class);
     }
+
+    protected $fillable = [
+        'name',
+        'game_id',
+    ];
 }

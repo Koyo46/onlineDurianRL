@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('game_id')->constrained();
             $table->string('name');
-            $table->integer('order');
+            $table->boolean('is_ready')->default(false);
+            $table->integer('order')->nullable();
             $table->timestamps();
         });
     }
