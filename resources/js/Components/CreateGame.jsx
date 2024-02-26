@@ -5,12 +5,15 @@ import { useState } from "react";
 
 function CreateGame({}) {
     const [playerCount, setPlayerCount] = useState(4);
+    const [gameId, setGameId] = useState(1);
 
     const createGame = async () => {
         try {
             const response = await axios.post("/api/game/createGame", {
                 playerCount,
+                gameId,
             });
+            setGameId(response.data.gameId);
             window.location.href = response.data.redirectUrl;
         } catch (error) {
             console.error(error);

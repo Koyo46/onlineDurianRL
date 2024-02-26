@@ -2,28 +2,32 @@ import React from "react";
 import { getCardSymbol } from "../utils/cardHelpers";
 import { Grid } from "@mui/material";
 
-const HandCard = (props) => {
-    const generatedCard = Array.isArray(props.card) ? props.card : [];
+const HandCards = (props) => {
+    const generatedCard = Array.isArray(props.cards) ? props.cards : [];
     return (
         <div>
             {generatedCard.map((cardObj, index) => {
-                const playerNumber = index + 1; // プレイヤー番号を取得
                 return (
                     <div key={index}>
-                        {props.player === playerNumber &&
+                        {sessionStorage.getItem("sessionId") ===
+                            props.players[index].session_id &&
                         props.check === false ? (
                             <Grid container>
                                 <Grid item>
                                     <img src={getCardSymbol(null)} />
                                 </Grid>
-                                <Grid item>{`あなた`}</Grid>
+                                <Grid
+                                    item
+                                >{`${props.players[index].name}（あなた）`}</Grid>
                             </Grid>
                         ) : (
                             <Grid container>
                                 <Grid item>
                                     <img src={getCardSymbol(cardObj)} />
                                 </Grid>
-                                <Grid item>{`プレイヤー${playerNumber}`}</Grid>
+                                <Grid
+                                    item
+                                >{`${props.players[index].name}`}</Grid>
                             </Grid>
                         )}
                     </div>
@@ -33,4 +37,4 @@ const HandCard = (props) => {
     );
 };
 
-export default HandCard;
+export default HandCards;
