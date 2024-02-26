@@ -9,31 +9,26 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PlayersReady implements ShouldBroadcast
+class TurnAdvanced implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $player;
+    public $currentTurn;
 
-    /**
-     * Create a new event instance.
-     */
-    public function __construct(Player $player)
+    public function __construct(Player $player, $currentTurn)
     {
         $this->player = $player;
+        $this->currentTurn = $currentTurn;
     }
 
-    /**
-     * Get the channels the event should broadcast on.
-     *
-     */
     public function broadcastOn()
     {
-        return new Channel('game1');
+        return new Channel('game.' . $this->player->game_id);
     }
 
     public function broadcastAs()
     {
-        return 'players-ready';
+        return 'turn-advanced';
     }
 }

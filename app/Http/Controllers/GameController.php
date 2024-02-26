@@ -3,30 +3,34 @@
 namespace App\Http\Controllers;
 
 use App\Events\GameStarted;
-use App\Events\PlayersReady;
+use App\Events\HandCards;
+use App\Events\OrderdFruits;
+use App\Events\PlayerReady;
+use App\Events\TurnAdvanced;
 use App\Http\Controllers\Controller;
 use App\Models\Card;
+use App\Models\Deck;
 use App\Models\Game;
-use App\Models\OrderdFruits;
+use App\Models\OrderdFruit;
 use App\Models\Player;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class GameController extends Controller
 {
     public function createGame(Request $request)
     {
-        $game = Game::create(); // 新しいゲームを作成
+        $game = Game::create(['player_count' => $request->playerCount]); // 新しいゲームを作成
 
         // 指定された数のプレイヤーを作成
-        for ($i = 0; $i < $request->playerCount; $i++) {
+        for ($i = 0; $i < $game->player_count; $i++) {
             Player::create([
                 'game_id' => $game->id,
                 'name' => '',
                 'is_ready' => false,
             ]);
         }
-        event(new GameStarted($game));
 
         return response()->json(['redirectUrl' => route('game', ['gameId' => $game->id, 'playerCount' => $request->playerCount])]);
     }
@@ -54,64 +58,83 @@ class GameController extends Controller
         }
         $player->name = $name;
         $player->is_ready = true;
+        $sessionId = Str::random(10);
+        $player->session_id = $sessionId;
         $player->save();
-        $result = event(new PlayersReady($player));
-        Log::alert($result);
+        event(new PlayerReady($player));
 
         return response()->json(['player' => $player]);
     }
 
-    public static function startGame($gameId)
+    public static function startGame(int $gameId, int $playerCount)
     {
         $game = Game::find($gameId);
-        $players = $game->players;
+        $players = $game->players->where('is_ready', true);
+        Log::alert($game);
+        Log::alert($players);
 
-        foreach ($players as $player) {
-            if (!$player->is_ready) {
-                return response()->json(['error' => 'All players are not ready yet.']);
-            }
+        // プレイヤーの数だけランダムな順番を生成
+        $order = range(1, $players->count());
+        shuffle($order);
+        // 各プレイヤーにランダムな順番を割り当てる
+        foreach ($players as $index => $player) {
+            $player->order = $order[$index];
+            $player->save();
         }
-        OrderdFruits::truncate(); // orderd_fruitsテーブルのレコードを全削除
 
-        //オブジェクトで扱いたい
-        $cards = include(database_path('data/cards.php'));
+        OrderdFruit::truncate(); // orderd_fruitsテーブルのレコードを全削除
+
+        $cards = Card::all();
         shuffle($cards); // 配列をシャッフル
         $shuffledCards = $cards; // シャッフルされた配列を$shuffledCardsに代入
-
-        $players = 4;
-
-        for ($i = 0; $i < $players; $i++) {
-            $handCards[] = array_shift($shuffledCards);
+        foreach ($shuffledCards as $card) {
+            $card;
+            Deck::create([
+                'game_id' => $gameId,
+                'card_id' => $card->id
+            ]);
         }
 
+        for ($i = 0; $i < $playerCount; $i++) {
+            $handCards[] = array_shift($shuffledCards);
+        }
         // 在庫アイテムの初期化
         $stockedItems = ['berry' => 0, 'banana' => 0, 'grape' => 0, 'durian' => 0];
 
         // 手札のカードの記号の合計を計算
         foreach ($handCards as $card) {
-            $stockedItems['berry'] += ($card['fruit1'] === 'berry' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'berry' ? $card['fruit2_count'] : 0);
-            $stockedItems['banana'] += ($card['fruit1'] === 'banana' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'banana' ? $card['fruit2_count'] : 0);
-            $stockedItems['grape'] += ($card['fruit1'] === 'grape' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'grape' ? $card['fruit2_count'] : 0);
-            $stockedItems['durian'] += ($card['fruit1'] === 'durian' ? $card['fruit1_count'] : 0) + ($card['fruit2'] === 'durian' ? $card['fruit2_count'] : 0);
+            $stockedItems['berry'] += ($card->fruit1 === 'berry' ? $card->fruit1_count : 0) + ($card->fruit2 === 'berry' ? $card->fruit2_count : 0);
+            $stockedItems['banana'] += ($card->fruit1 === 'banana' ? $card->fruit1_count : 0) + ($card->fruit2 === 'banana' ? $card->fruit2_count : 0);
+            $stockedItems['grape'] += ($card->fruit1 === 'grape' ? $card->fruit1_count : 0) + ($card->fruit2 === 'grape' ? $card->fruit2_count : 0);
+            $stockedItems['durian'] += ($card->fruit1 === 'durian' ? $card->fruit1_count : 0) + ($card->fruit2 === 'durian' ? $card->fruit2_count : 0);
         }
+        event(new HandCards($handCards, $gameId));
+
+        $currentPlayer = $game->players->sortBy('order')->first();
+        event(new GameStarted($game, $currentPlayer));
 
         // 必要なデータを返す
         return response()->json([
-            'game' => $game,
             'handCards' => $handCards,
             'deck' => $shuffledCards,
             'stockedItems' => $stockedItems,
+            'currentPlayer' => $currentPlayer,
         ]);
     }
 
-    public static function orderCard(
-        $deck,
-    ) {
-        // $game->advanceTurn();
-        if (count($deck) > 0) {
+    // public static function getHandCards($gameId)
+    // {
+    //     $handCards = Deck::where('game_id', $gameId)->get();
+    //     return response()->json(['handCards' => $handCards]);
+    // }
 
-            $newOrderdCard = $deck[0];
-            array_shift($deck); // 配られたカードを配列から削除
+    public static function orderCard(
+        $gameId
+    ) {
+        $deck = Deck::where('game_id', $gameId)->get();
+        if (count($deck) > 0) {
+            $newOrderdCard = Card::find($deck[0]->card_id);
+            $deck->shift(); // 配られたカードを配列から削除
             return response()->json([
                 'newOrderdCard' => $newOrderdCard,
                 'deck' => $deck,
@@ -123,10 +146,10 @@ class GameController extends Controller
 
     public static function decideOrder(
         $card,
-        $selectedFruitId
+        $selectedFruitId,
+        $gameId
     ) {
-        Log::error($card);
-        OrderdFruits::create([
+        OrderdFruit::create([
             'card_id' => $card['id'],
             'fruit1' => $card['fruit1'],
             'fruit1_count' => $card['fruit1_count'],
@@ -135,7 +158,16 @@ class GameController extends Controller
             'selected_fruit' => $selectedFruitId
         ]);
 
-        $orderdFruits = OrderdFruits::all();
+        $orderdFruits = OrderdFruit::all();
+        event(new OrderdFruits($orderdFruits, $gameId));
+
+        $game = Game::find($gameId);
+        $game->advanceTurn();
+        $nextPlayer = Player::where('game_id', $gameId)->where('order', '=', $game->current_turn)->first();
+        if (!$nextPlayer) {
+            $nextPlayer = Player::where('game_id', $gameId)->orderBy('order', 'asc')->first();
+        }
+        event(new TurnAdvanced($nextPlayer, $game->current_turn));
 
         return response()->json([
             'orderdFruits' => $orderdFruits,
@@ -182,6 +214,7 @@ class GameController extends Controller
                 }
             }
         }
+        event(new CalledMaster());
         if ($totalBerry > $stockedItems['berry'] || $totalBanana > $stockedItems['banana'] || $totalGrape > $stockedItems['grape'] || $totalDurian > $stockedItems['durian']) {
             return true;
         } else {

@@ -2,15 +2,13 @@
 
 namespace App\Events;
 
-use App\Models\Game;
-use App\Models\Player;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class GameStarted implements ShouldBroadcast
+class CalledMaster implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -19,10 +17,10 @@ class GameStarted implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(Game $game, Player $currentPlayer)
+    public function __construct()
     {
-        $this->game = $game;
-        $this->currentPlayer = $currentPlayer;
+        // $this->game = $game;
+        // $this->currentPlayer = $currentPlayer;
     }
 
     /**
@@ -36,6 +34,6 @@ class GameStarted implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'game-started';
+        return 'called-master';
     }
 }

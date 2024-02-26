@@ -1,6 +1,6 @@
 import Pusher from "pusher-js";
 import axios from "axios";
-import HandCard from "@/Components/HandCard";
+import HandCards from "@/Components/HandCards";
 import NewOrderdCard from "@/Components/NewOrderdCard.jsx";
 import OrderdFruits from "@/Components/OrderdFruits.jsx";
 import PrimaryButton from "@/Components/PrimaryButton";
@@ -8,43 +8,77 @@ import SecondaryButton from "@/Components/SecondaryButton";
 import { Link, Head, usePage } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import { Grid, TextField } from "@mui/material";
-import { getCardSymbol } from "../utils/cardHelpers.js";
-import GameSetup from "@/Components/CreateGame.jsx";
-import JoinGame from "@/Components/JoinGame.jsx";
-import CreateGame from "@/Components/CreateGame.jsx";
 
 export default function Game() {
     const processing = false;
-    const player = 1;
     const { props } = usePage();
     const gameId = props.gameId;
     const playerCount = Number(props.playerCount);
-    const [game, setGame] = useState("");
-    const [handCard, setHandCard] = useState("");
+    const [sessionId, setSessionId] = useState("");
+    const [handCards, setHandCards] = useState("");
+    const [gameStarted, setGameStarted] = useState(false);
+    const [currentPlayer, setCurrentPlayer] = useState("");
     const [orderdCard, setOrderdCard] = useState("");
     const [orderdFruits, setOrderdFruits] = useState([]);
     const [decided, setDecided] = useState(true);
     const [stockedItems, setStockedItems] = useState([]);
-    const [isStarted, setIsStarted] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [isStockEmpty, setIsStockEmpty] = useState(true);
     const [isStockChecked, setIsStockChecked] = useState(false);
     const [deck, setDeck] = useState([]);
     const [selectedFruit, setSelectedFruit] = useState("");
     const [playerName, setPlayerName] = useState("");
-    const [playersReady, setPlayersReady] = useState([]);
+    const [readyUpPlayers, setReadyUpPlayers] = useState([]);
     const [full, setFull] = useState(false);
 
     const handlePlayerNameChange = (event) => {
         setPlayerName(event.target.value);
     };
 
+    // // コンポーネントがマウントされた時にローカルストレージからsessionIdを読み込む
+    // useEffect(() => {
+    //     const storedSessionId = localStorage.getItem("sessionId");
+    //     if (storedSessionId) {
+    //         setSessionId(storedSessionId);
+    //     }
+    // }, []);
+
+    // // sessionIdが更新された時にローカルストレージに保存する
+    // useEffect(() => {
+    //     if (sessionId) {
+    //         localStorage.setItem("sessionId", sessionId);
+    //     }
+    // }, [sessionId]);
+
+    const readyUpPlayersList = readyUpPlayers.map((player) => (
+        <li key={player.id}>
+            {" "}
+            {player.session_id === sessionId
+                ? `${player.name}（あなた）`
+                : player.name}{" "}
+            が準備完了しました。
+        </li>
+    ));
+
     const handleReadyUp = async () => {
         try {
-            const response = await axios.post("/api/player/ready", {
-                name: playerName,
-                gameId: gameId,
-            });
+            const response = await axios.post(
+                "/api/player/ready",
+                {
+                    name: playerName,
+                    gameId: gameId,
+                },
+                {
+                    headers: {
+                        "X-Session-ID": sessionId,
+                    },
+                }
+            );
+            setSessionId(response.data.player.session_id);
+            sessionStorage.setItem(
+                "sessionId",
+                response.data.player.session_id
+            );
             setFull(response.data.full);
             setIsReady(true);
         } catch (error) {
@@ -57,44 +91,52 @@ export default function Game() {
             cluster: "ap3",
         });
 
-        const channel = pusher.subscribe("game1");
+        const channel = pusher.subscribe("game." + gameId);
         channel.bind("game-started", function (data) {
-            alert(JSON.stringify(data));
-            setGame(data);
-            console.log("Received game-started event with data:", data);
+            setGameStarted(true);
+            setCurrentPlayer(data.currentPlayer);
+            console.log(data);
+            // サーバーから手札情報を取得する　コンソールで手札が確認できてしまう問題未解決
+            // const fetchHandCards = async () => {
+            //     try {
+            //         const response = await axios.get(
+            //             `/api/hand-cards/${gameId}`
+            //         );
+            //         setHandCards(response.data.cards);
+            //         console.log(response.data.cards);
+            //     } catch (error) {
+            //         console.error("手札情報の取得に失敗しました。", error);
+            //     }
+            // };
+
+            // fetchHandCards();
         });
-        channel.bind("pusher:subscription_succeeded", function (members) {
-            let playerId = 1;
-            console.log(members);
+        channel.bind("player-ready", (data) => {
+            setReadyUpPlayers((prevPlayers) => [...prevPlayers, data.player]);
         });
-        channel.bind("players-ready", (data) => {
-            setPlayersReady((prevPlayers) => {
-                // 既に配列に存在するプレイヤーの名前のセットを作成
-                const playerNames = new Set(
-                    prevPlayers.map((player) => player.name)
-                );
-                // 新しいプレイヤーが既にセットに存在しない場合のみ追加
-                if (!playerNames.has(data.player.name)) {
-                    return [...prevPlayers, data.player];
-                } else {
-                    return prevPlayers;
-                }
-            });
+        channel.bind("hand-cards", (data) => {
+            // カードデータを受け取ったときの処理
+            setHandCards(data.cards);
+        });
+        channel.bind("turn-advanced", (data) => {
+            setCurrentPlayer(data.player);
+            console.log(data.player);
+        });
+        channel.bind("orderd-fruits", (data) => {
+            setOrderdFruits(data.orderdFruits);
+        });
+        channel.bind("called-master", (data) => {
+            setGameStarted(false);
+            setIsStockChecked(true);
         });
     }, []);
 
     useEffect(() => {
-        const pusher = new Pusher("efd2fa33db7ff60f0a6d", {
-            cluster: "ap3",
-        });
-
-        const channel = pusher.subscribe("game1");
-
         // サーバーから現在のプレイヤーのリストを取得
         const fetchPlayersReady = async () => {
             try {
                 const response = await axios.get(`/api/game/${gameId}/players`);
-                setPlayersReady(response.data.players);
+                setReadyUpPlayers(response.data.players);
             } catch (error) {
                 console.error(error);
             }
@@ -102,24 +144,32 @@ export default function Game() {
 
         // コンポーネントのマウント時にプレイヤーのリストを取得
         fetchPlayersReady();
-
-        // Pusherのクリーンアップ
-        return () => {
-            pusher.unsubscribe("game1");
-        };
-    }, [gameId]); // gameIdが変わった時にも再実行
+    }, []);
 
     const startGame = async () => {
         try {
-            const response = await axios.post("/api/game/start", {
-                game: game,
-            });
-            setHandCard(response.data.handCards);
-            setDeck(response.data.deck);
+            const response = await axios.post(
+                "/api/game/start",
+                {
+                    gameId: gameId,
+                    playerCount: playerCount,
+                },
+                {
+                    headers: {
+                        "X-Session-ID": sessionId,
+                    },
+                }
+            );
+            setHandCards(response.data.handCards);
+            setGameStarted(true);
+            setCurrentPlayer(response.data.currentPlayer);
             setStockedItems(response.data.stockedItems);
             setOrderdCard(response.data.orderdCard);
             setOrderdFruits([]);
             setIsStockChecked(false);
+            console.log(response.data.handCards);
+            console.log(readyUpPlayers);
+            console.log(response.data.currentPlayer);
         } catch (error) {
             console.error(error);
         }
@@ -128,16 +178,12 @@ export default function Game() {
     const handleOrderCard = async () => {
         try {
             const response = await axios.post("/api/game/orderCard", {
-                game: game,
-                deck: deck,
-                orderdCard: orderdCard,
-                orderdFruits: orderdFruits,
+                gameId: gameId,
             });
             setOrderdCard(response.data.newOrderdCard);
             setDeck(response.data.deck);
             setDecided(false);
-            console.log(orderdFruits);
-            console.log(game);
+            console.log(orderdCard);
         } catch (error) {
             console.error(error);
         }
@@ -151,6 +197,7 @@ export default function Game() {
             });
             setIsStockEmpty(response.data);
             setIsStockChecked(true);
+            setGameStarted(false);
         } catch (error) {
             console.error(error);
         }
@@ -173,26 +220,20 @@ export default function Game() {
                         </>
                     )}
                     {full && <p style={{ color: "red" }}>満席です</p>}
-                    <ul>
-                        {playersReady.map(
-                            (player, index) =>
-                                player.name && (
-                                    <li key={index}>
-                                        {player.name} が準備完了しました。
-                                    </li>
-                                )
-                        )}
-                    </ul>
-                    <HandCard
-                        card={handCard}
-                        player={player}
+                    <ul>{readyUpPlayersList}</ul>
+                    <HandCards
+                        cards={handCards}
+                        players={readyUpPlayers}
                         check={isStockChecked}
+                        session={sessionId}
                     />
                     <PrimaryButton
                         onClick={startGame}
                         className="ms-4"
                         disabled={
-                            processing || playersReady.length !== playerCount
+                            processing ||
+                            readyUpPlayers.length !== playerCount ||
+                            gameStarted
                         }
                     >
                         {isStockChecked ? "新しいゲーム" : "カードを配る"}
@@ -200,22 +241,30 @@ export default function Game() {
                     <SecondaryButton
                         onClick={handleOrderCard}
                         className="ms-4"
-                        disabled={processing || isStockChecked}
+                        disabled={
+                            processing ||
+                            isStockChecked ||
+                            currentPlayer.session_id !== sessionId
+                        }
                     >
                         注文をとる
                     </SecondaryButton>
                     <SecondaryButton
                         onClick={callMaster}
                         className="ms-4"
-                        disabled={processing || isStockChecked}
+                        disabled={
+                            processing ||
+                            isStockChecked ||
+                            currentPlayer.session_id !== sessionId
+                        }
                     >
                         店長を呼ぶ
                     </SecondaryButton>
                     <NewOrderdCard
+                        gameId={gameId}
                         card={orderdCard}
                         selectedFruit={selectedFruit}
                         setSelectedFruit={setSelectedFruit}
-                        orderdFruits={orderdFruits}
                         setOrderdFruits={setOrderdFruits}
                         decided={decided}
                         setDecided={setDecided}
