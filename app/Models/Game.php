@@ -15,13 +15,18 @@ class Game extends Model
     }
 
     protected $fillable = [
-        'current_turn', 'current_round',
+        'current_turn', 'current_round', 'player_count',
     ];
+
+    public function decks()
+    {
+        return $this->hasMany(Deck::class);
+    }
 
     // ターンを進めるメソッドを追加
     public function advanceTurn()
     {
-        $this->turn++;
+        $this->current_turn++;
         $this->save();
     }
 }
