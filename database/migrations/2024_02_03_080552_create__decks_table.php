@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('games', function (Blueprint $table) {
+        Schema::create('decks', function (Blueprint $table) {
             $table->id();
-            $table->integer('current_turn')->default(1);
-            $table->integer('current_round')->default(1);
-            $table->integer('player_count')->default(4);
-
+            $table->integer('card_id');
+            $table->foreignId('game_id')->constrained();
             $table->timestamps();
         });
     }
@@ -26,6 +24,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('games');
+        Schema::dropIfExists('decks', function (Blueprint $table) {
+            $table->dropForeign(['game_id']);
+        });
     }
 };
