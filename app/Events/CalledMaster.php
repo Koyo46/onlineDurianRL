@@ -12,15 +12,14 @@ class CalledMaster implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $game, $currentPlayer;
+    public $gameId;
 
     /**
      * Create a new event instance.
      */
-    public function __construct()
+    public function __construct($gameId)
     {
-        // $this->game = $game;
-        // $this->currentPlayer = $currentPlayer;
+        $this->gameId = $gameId;
     }
 
     /**
@@ -29,7 +28,7 @@ class CalledMaster implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        return new Channel('game.' . $this->game->id);
+        return new Channel('game.' . $this->gameId);
     }
 
     public function broadcastAs()
