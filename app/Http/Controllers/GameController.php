@@ -6,7 +6,7 @@ use App\Events\CalledMaster;
 use App\Events\GameStarted;
 use App\Events\HandCards;
 use App\Events\OrderdFruits;
-use App\Events\PlayerReady;
+use App\Events\PlayerState;
 use App\Events\TurnAdvanced;
 use App\Http\Controllers\Controller;
 use App\Models\Card;
@@ -50,7 +50,7 @@ class GameController extends Controller
         $player->is_ready = true;
         $player->session_id = Str::random(10);
         $player->save();
-        event(new PlayerReady($player));
+        event(new PlayerState($player));
 
         return response()->json(['player' => $player]);
     }
@@ -203,22 +203,20 @@ class GameController extends Controller
                 }
             }
         }
-
         $game = Game::find($gameId);
         $currentPlayer = $game->players()->where('order', $game->current_turn % $game->player_count)->first();
         $previousPlayer = $game->players()->where('order', ($game->current_turn - 1) % $game->player_count)->first();
 
-        event(new CalledMaster($gameId));
         $isStockEmpty = false;
-        if ($totalBerry > ($stockedItems['berry'] ?? 0) || $totalBanana > ($stockedItems['banana'] ?? 0) || $totalGrape > ($stockedItems['grape'] ?? 0) || $totalDurian > ($stockedItems['durian'] ?? 0)) {
+        if (($totalBerry ?? 0) > ($stockedItems['berry'] ?? 0) || ($totalBanana ?? 0) > ($stockedItems['banana'] ?? 0) || ($totalGrape ?? 0) > ($stockedItems['grape'] ?? 0) || ($totalDurian ?? 0) > ($stockedItems['durian'] ?? 0)) {
             $previousPlayer->score -= $game->current_round;
             $previousPlayer->save();
-            event(new PlayerReady($previousPlayer));
             $isStockEmpty = true;
+            event(new CalledMaster($gameId, $isStockEmpty, $previousPlayer));
         } else {
             $currentPlayer->score -= $game->current_round;
             $currentPlayer->save();
-            event(new PlayerReady($currentPlayer));
+            event(new CalledMaster($gameId, $isStockEmpty, $currentPlayer));
         }
         return response()->json([
             'isStockEmpty' => $isStockEmpty,
