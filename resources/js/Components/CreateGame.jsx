@@ -22,7 +22,6 @@ function CreateGame({}) {
 
     return (
         <div>
-            ハリボテ
             <select
                 value={playerCount}
                 onChange={(e) => setPlayerCount(e.target.value)}
