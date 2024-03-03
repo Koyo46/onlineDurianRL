@@ -18,6 +18,8 @@ return new class extends Migration
             $table->boolean('is_ready')->default(false);
             $table->string('session_id')->nullable();
             $table->integer('order')->nullable();
+            $table->foreignId('hand_card_id')->nullable()->constrained('cards');
+            $table->integer('score')->default(0);
             $table->timestamps();
         });
     }
