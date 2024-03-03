@@ -31,6 +31,9 @@ export default function Game() {
     const [playerName, setPlayerName] = useState("");
     const [readyUpPlayers, setReadyUpPlayers] = useState([]);
     const [full, setFull] = useState(false);
+    const [orderButtonDisabled, setOrderButtonDisabled] = useState(false);
+    const [callMasterButtonDisabled, setCallMasterButtonDisabled] =
+        useState(false);
 
     const handlePlayerNameChange = (event) => {
         setPlayerName(event.target.value);
@@ -100,6 +103,7 @@ export default function Game() {
             setIsStockChecked(false);
             setOrderdFruits([]);
             console.log(data);
+            //fixme
             // サーバーから手札情報を取得する　コンソールで手札が確認できてしまう問題未解決
             // const fetchHandCards = async () => {
             //     try {
@@ -127,6 +131,7 @@ export default function Game() {
             setOrderdFruits(data.orderdFruits);
         });
         channel.bind("called-master", (data) => {
+            setIsStockEmpty(data.isStockEmpty);
             setGameStarted(false);
             setIsStockChecked(true);
         });
@@ -138,7 +143,7 @@ export default function Game() {
         });
 
         const channel = pusher.subscribe("game." + gameId);
-        channel.bind("player-ready", (data) => {
+        channel.bind("player-state", (data) => {
             setReadyUpPlayers((currentPlayers) => {
                 const index = currentPlayers.findIndex(
                     (player) => player.id === data.player.id
@@ -154,7 +159,7 @@ export default function Game() {
         });
         // クリーンアップ関数
         return () => {
-            channel.unbind("player-ready");
+            channel.unbind("player-state");
             pusher.unsubscribe("game." + gameId);
         };
     }, [gameId]); // gameIdが変更されたときのみこの効果を再実行
@@ -215,6 +220,9 @@ export default function Game() {
             setOrderdCard(response.data.newOrderdCard);
             setDeck(response.data.deck);
             setDecided(false);
+            // 注文をとるボタンと店長を呼ぶボタンをdisableに設定
+            setOrderButtonDisabled(true);
+            setCallMasterButtonDisabled(true);
             console.log(orderdCard);
         } catch (error) {
             console.error(error);
@@ -223,6 +231,7 @@ export default function Game() {
 
     const callMaster = async () => {
         try {
+            console.log(stockedItems);
             const response = await axios.post("/api/game/callMaster", {
                 orderdFruits: orderdFruits,
                 stockedItems: stockedItems,
@@ -243,20 +252,27 @@ export default function Game() {
                 <Grid item xs={6}>
                     {isReady === false && (
                         <>
-                            <input
-                                type="text"
-                                placeholder="名前を入力してください"
-                                value={playerName}
-                                onChange={handlePlayerNameChange}
-                            />
-                            <button onClick={handleReadyUp}>準備完了</button>
+                            {readyUpPlayers.length < playerCount ? (
+                                <>
+                                    <input
+                                        type="text"
+                                        placeholder="名前を入力してください"
+                                        value={playerName}
+                                        onChange={handlePlayerNameChange}
+                                    />
+                                    <button onClick={handleReadyUp}>
+                                        準備完了
+                                    </button>
+                                </>
+                            ) : (
+                                <p style={{ color: "red" }}>満席です</p>
+                            )}
                         </>
                     )}
-                    {full && <p style={{ color: "red" }}>満席です</p>}
-                    {!(readyUpPlayers.length >= playerCount) && (
+                    {readyUpPlayers.length < playerCount && (
                         <ul>{readyUpPlayersList}</ul>
                     )}
-                    {readyUpPlayers.length >= playerCount && (
+                    {readyUpPlayers.length === playerCount && (
                         <table>
                             <thead>
                                 <tr>
