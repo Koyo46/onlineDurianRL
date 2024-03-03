@@ -17,13 +17,17 @@ use Inertia\Inertia;
 */
 
 Route::get('/', function () {
-    return Inertia::render('Game', [
+    return Inertia::render('SettingGame', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::get('/game/{gameId}/{playerCount}', function ($gameId, $playerCount) {
+    return Inertia::render('Game', ['gameId' => $gameId, 'playerCount' => $playerCount]);
+})->name('game');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

@@ -13,8 +13,10 @@ return new class extends Migration
     {
         Schema::create('games', function (Blueprint $table) {
             $table->id();
-            $table->integer('current_turn')->default(1);
-            $table->integer('current_round')->default(1);
+            $table->integer('current_turn')->default(0);
+            $table->integer('current_round')->default(0);
+            $table->integer('player_count')->default(4);
+
             $table->timestamps();
         });
     }

@@ -3,8 +3,8 @@ import { getCardSymbol } from "../utils/cardHelpers";
 import { fruits } from "../utils/fruits";
 
 const NewOrderdCard = ({
+    gameId,
     card,
-    orderdFruits,
     setOrderdFruits,
     decided,
     setDecided,
@@ -19,6 +19,7 @@ const NewOrderdCard = ({
             const response = await axios.post("/api/game/decideOrder", {
                 card: card,
                 selectedFruitId: selectedFruitId,
+                gameId: gameId,
             });
             // Orderd Fruitsコンポーネントでレンダリングするための処理を追加
             setOrderdFruits(response.data.orderdFruits);
