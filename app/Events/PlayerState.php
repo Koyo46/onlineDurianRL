@@ -9,7 +9,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PlayerReady implements ShouldBroadcast
+class PlayerState implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -27,6 +27,6 @@ class PlayerReady implements ShouldBroadcast
 
     public function broadcastAs()
     {
-        return 'player-ready';
+        return 'player-state';
     }
 }
