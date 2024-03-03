@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CalledMaster;
 use App\Events\GameStarted;
 use App\Events\HandCards;
 use App\Events\OrderdFruits;
@@ -23,15 +24,6 @@ class GameController extends Controller
     {
         $game = Game::create(['player_count' => $request->playerCount]); // 新しいゲームを作成
 
-        // 指定された数のプレイヤーを作成
-        for ($i = 0; $i < $game->player_count; $i++) {
-            Player::create([
-                'game_id' => $game->id,
-                'name' => '',
-                'is_ready' => false,
-            ]);
-        }
-
         return response()->json(['redirectUrl' => route('game', ['gameId' => $game->id, 'playerCount' => $request->playerCount])]);
     }
 
@@ -52,14 +44,11 @@ class GameController extends Controller
 
     public static function beReady($name, $gameId)
     {
-        $player = Player::where('game_id', $gameId)->where('name', "")->first();
-        if (!$player) {
-            return response()->json(['full' => true]);
-        }
+        $player = new Player;
+        $player->game_id = $gameId;
         $player->name = $name;
         $player->is_ready = true;
-        $sessionId = Str::random(10);
-        $player->session_id = $sessionId;
+        $player->session_id = Str::random(10);
         $player->save();
         event(new PlayerReady($player));
 
@@ -69,12 +58,13 @@ class GameController extends Controller
     public static function startGame(int $gameId, int $playerCount)
     {
         $game = Game::find($gameId);
+        $game->current_round += 1;
+        $game->current_turn = 0;
+        $game->save();
         $players = $game->players->where('is_ready', true);
-        Log::alert($game);
-        Log::alert($players);
 
         // プレイヤーの数だけランダムな順番を生成
-        $order = range(1, $players->count());
+        $order = range(0, $players->count() - 1);
         shuffle($order);
         // 各プレイヤーにランダムな順番を割り当てる
         foreach ($players as $index => $player) {
@@ -111,7 +101,7 @@ class GameController extends Controller
         event(new HandCards($handCards, $gameId));
 
         $currentPlayer = $game->players->sortBy('order')->first();
-        event(new GameStarted($game, $currentPlayer));
+        event(new GameStarted($game, $currentPlayer, $game->current_round));
 
         // 必要なデータを返す
         return response()->json([
@@ -119,6 +109,7 @@ class GameController extends Controller
             'deck' => $shuffledCards,
             'stockedItems' => $stockedItems,
             'currentPlayer' => $currentPlayer,
+            'currentRound' => $game->current_round,
         ]);
     }
 
@@ -163,10 +154,8 @@ class GameController extends Controller
 
         $game = Game::find($gameId);
         $game->advanceTurn();
-        $nextPlayer = Player::where('game_id', $gameId)->where('order', '=', $game->current_turn)->first();
-        if (!$nextPlayer) {
-            $nextPlayer = Player::where('game_id', $gameId)->orderBy('order', 'asc')->first();
-        }
+        $nextPlayerOrder = ($game->current_turn % $game->player_count);
+        $nextPlayer = Player::where('game_id', $gameId)->where('order', '=', $nextPlayerOrder)->first();
         event(new TurnAdvanced($nextPlayer, $game->current_turn));
 
         return response()->json([
@@ -174,7 +163,7 @@ class GameController extends Controller
         ]);
     }
 
-    public static function callMaster($orderdFruits, $stockedItems)
+    public static function callMaster($orderdFruits, $stockedItems, $gameId)
     {
         $totalBerry = 0;
         $totalBanana = 0;
@@ -214,11 +203,25 @@ class GameController extends Controller
                 }
             }
         }
-        event(new CalledMaster());
-        if ($totalBerry > $stockedItems['berry'] || $totalBanana > $stockedItems['banana'] || $totalGrape > $stockedItems['grape'] || $totalDurian > $stockedItems['durian']) {
-            return true;
+
+        $game = Game::find($gameId);
+        $currentPlayer = $game->players()->where('order', $game->current_turn % $game->player_count)->first();
+        $previousPlayer = $game->players()->where('order', ($game->current_turn - 1) % $game->player_count)->first();
+
+        event(new CalledMaster($gameId));
+        $isStockEmpty = false;
+        if ($totalBerry > ($stockedItems['berry'] ?? 0) || $totalBanana > ($stockedItems['banana'] ?? 0) || $totalGrape > ($stockedItems['grape'] ?? 0) || $totalDurian > ($stockedItems['durian'] ?? 0)) {
+            $previousPlayer->score -= $game->current_round;
+            $previousPlayer->save();
+            event(new PlayerReady($previousPlayer));
+            $isStockEmpty = true;
         } else {
-            return false;
+            $currentPlayer->score -= $game->current_round;
+            $currentPlayer->save();
+            event(new PlayerReady($currentPlayer));
         }
+        return response()->json([
+            'isStockEmpty' => $isStockEmpty,
+        ]);
     }
 }
