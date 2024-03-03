@@ -46,5 +46,5 @@ Route::post('/game/decideOrder', function (Request $request) {
     return GameController::decideOrder($request->card, $request->selectedFruitId, $request->gameId);
 });
 Route::post('/game/callMaster', function (Request $request) {
-    return GameController::callMaster($request->orderdFruits, $request->stockedItems);
+    return GameController::callMaster($request->orderdFruits, $request->stockedItems, $request->gameId);
 });
