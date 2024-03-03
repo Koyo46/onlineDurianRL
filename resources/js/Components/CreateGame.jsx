@@ -25,7 +25,7 @@ function CreateGame({}) {
             ハリボテ
             <select
                 value={playerCount}
-                // onChange={(e) => setPlayerCount(e.target.value)}
+                onChange={(e) => setPlayerCount(e.target.value)}
             >
                 <option value={2}>2 players</option>
                 <option value={3}>3 players</option>
