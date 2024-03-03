@@ -18,6 +18,7 @@ export default function Game() {
     const [handCards, setHandCards] = useState("");
     const [gameStarted, setGameStarted] = useState(false);
     const [currentPlayer, setCurrentPlayer] = useState("");
+    const [currentRound, setCurrentRound] = useState(0);
     const [orderdCard, setOrderdCard] = useState("");
     const [orderdFruits, setOrderdFruits] = useState([]);
     const [decided, setDecided] = useState(true);
@@ -95,6 +96,9 @@ export default function Game() {
         channel.bind("game-started", function (data) {
             setGameStarted(true);
             setCurrentPlayer(data.currentPlayer);
+            setCurrentRound(data.currentRound);
+            setIsStockChecked(false);
+            setOrderdFruits([]);
             console.log(data);
             // サーバーから手札情報を取得する　コンソールで手札が確認できてしまう問題未解決
             // const fetchHandCards = async () => {
@@ -110,9 +114,6 @@ export default function Game() {
             // };
 
             // fetchHandCards();
-        });
-        channel.bind("player-ready", (data) => {
-            setReadyUpPlayers((prevPlayers) => [...prevPlayers, data.player]);
         });
         channel.bind("hand-cards", (data) => {
             // カードデータを受け取ったときの処理
@@ -132,6 +133,33 @@ export default function Game() {
     }, []);
 
     useEffect(() => {
+        const pusher = new Pusher("efd2fa33db7ff60f0a6d", {
+            cluster: "ap3",
+        });
+
+        const channel = pusher.subscribe("game." + gameId);
+        channel.bind("player-ready", (data) => {
+            setReadyUpPlayers((currentPlayers) => {
+                const index = currentPlayers.findIndex(
+                    (player) => player.id === data.player.id
+                );
+                console.log(index);
+                if (index !== -1) {
+                    return currentPlayers;
+                } else {
+                    // 新しいプレイヤーをリストに追加
+                    return [...currentPlayers, data.player];
+                }
+            });
+        });
+        // クリーンアップ関数
+        return () => {
+            channel.unbind("player-ready");
+            pusher.unsubscribe("game." + gameId);
+        };
+    }, [gameId]); // gameIdが変更されたときのみこの効果を再実行
+
+    useEffect(() => {
         // サーバーから現在のプレイヤーのリストを取得
         const fetchPlayersReady = async () => {
             try {
@@ -144,6 +172,9 @@ export default function Game() {
 
         // コンポーネントのマウント時にプレイヤーのリストを取得
         fetchPlayersReady();
+        if (readyUpPlayers.length === playerCount) {
+            setFull(true);
+        }
     }, []);
 
     const startGame = async () => {
@@ -167,6 +198,7 @@ export default function Game() {
             setOrderdCard(response.data.orderdCard);
             setOrderdFruits([]);
             setIsStockChecked(false);
+            setCurrentRound(response.data.currentRound);
             console.log(response.data.handCards);
             console.log(readyUpPlayers);
             console.log(response.data.currentPlayer);
@@ -194,8 +226,9 @@ export default function Game() {
             const response = await axios.post("/api/game/callMaster", {
                 orderdFruits: orderdFruits,
                 stockedItems: stockedItems,
+                gameId: gameId,
             });
-            setIsStockEmpty(response.data);
+            setIsStockEmpty(response.data.isStockEmpty);
             setIsStockChecked(true);
             setGameStarted(false);
         } catch (error) {
@@ -220,7 +253,33 @@ export default function Game() {
                         </>
                     )}
                     {full && <p style={{ color: "red" }}>満席です</p>}
-                    <ul>{readyUpPlayersList}</ul>
+                    {!(readyUpPlayers.length >= playerCount) && (
+                        <ul>{readyUpPlayersList}</ul>
+                    )}
+                    {readyUpPlayers.length >= playerCount && (
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>プレイヤー名</th>
+                                    <th>やらかし</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {readyUpPlayers
+                                    .sort((a, b) => a.order - b.order)
+                                    .map((player, index) => (
+                                        <tr key={index}>
+                                            <td>
+                                                {player.session_id === sessionId
+                                                    ? `${player.name}（あなた）`
+                                                    : player.name}
+                                            </td>
+                                            <td>{player.score}</td>
+                                        </tr>
+                                    ))}
+                            </tbody>
+                        </table>
+                    )}
                     <HandCards
                         cards={handCards}
                         players={readyUpPlayers}
@@ -284,6 +343,7 @@ export default function Game() {
                 </Grid>
                 <Grid item xs={12}>
                     <p>お店ID：{gameId}</p>
+                    <p>ラウンド：{currentRound}</p>
                 </Grid>
             </Grid>
         </>
