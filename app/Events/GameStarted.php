@@ -14,15 +14,16 @@ class GameStarted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $game, $currentPlayer;
+    public $game, $currentPlayer, $currentRound;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Game $game, Player $currentPlayer)
+    public function __construct(Game $game, Player $currentPlayer, int $currentRound)
     {
         $this->game = $game;
         $this->currentPlayer = $currentPlayer;
+        $this->currentRound = $currentRound;
     }
 
     /**
